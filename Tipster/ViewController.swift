@@ -66,6 +66,10 @@ class ViewController: UIViewController, UITextFieldDelegate{
             changeTipButtons(sender)
         }
         var billEdited = billField.text!
+        let defaults = UserDefaults.standard
+        defaults.set(billEdited, forKey: "Stored Bill Amount")
+        defaults.set(NSDate.init(), forKey: "Stored Bill Time")
+        defaults.synchronize()
         billEdited.remove(at: (billEdited.startIndex))
         let bill = Double(billEdited) ?? 0
         let tip = bill * selectedTip
@@ -184,7 +188,6 @@ class ViewController: UIViewController, UITextFieldDelegate{
         super.viewDidLoad()
         self.billField.delegate = self
         self.billField.becomeFirstResponder()
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -193,9 +196,18 @@ class ViewController: UIViewController, UITextFieldDelegate{
         self.billField.becomeFirstResponder()
         let defaults = UserDefaults.standard
         selectedTip = (defaults.object(forKey: "Default Tip") as! Double?) ?? 0.18
+        if (defaults.object(forKey: "Stored Bill Amount") != nil) {
+            let lastTime = defaults.object(forKey: "Stored Bill Time") as! NSDate
+            if NSDate().timeIntervalSince(lastTime as Date) < 600 {
+                billField.text = defaults.object(forKey: "Stored Bill Amount") as! String?
+                calculateTip(billField)
+            }
+            else {
+                defaults.removeObject(forKey: "Stored Bill Amount")
+                defaults.removeObject(forKey: "Stored Bill Time")
+            }
+        }
         changeTipButtonByPercAndCalculate(selectedTip)
-        
-        
     }
     
     override func didReceiveMemoryWarning() {
